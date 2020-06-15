@@ -825,3 +825,163 @@ return_nameMon:
 	lw	$a1, 0($sp)
 	addi	$sp, $sp, 4
 	jr 	$ra
+# int GetTime(char&* TIME_1, char* TIME_2)
+# Ham tinh khoang cach giua 2 chuoi TIME $a0, $a1 tra ve $v0
+GetTime:
+	addi	$sp, $sp, 
+	sw	$ra, 0($sp)
+	sw	$a0, 4($sp)
+	sw	$a1, 8($sp)
+	
+	# Lay nam cua 2 TIME gan vao $t0, $t1
+	jal 	Year
+	addi	$t0, $v0, 0
+	lw	$a0, 8($sp)
+	jal	Year
+	addi	$t1, $v0, 0
+
+	sub	$t2, $t1, $t0
+	beq	$t2, 0, set0_distance
+	# Kiem tra thoi gian nao lon hon, gan $a2 = 1 neu TIME_1 < TIME_2 va nguoc lai
+	slt	$t3, $t2, $0
+	beq	$t3, $0, set_SmallerTime
+	addi	$a2, $zero, 0
+	# t2 = t0 - t1
+	addi	$t2, $t0, $t1
+	j	compare_DayMonth
+set_SmallerTime:	
+	addi 	$a2, $0, 1
+# So sanh ngay, thang cua 2 TIME_1 va TIME_2
+compare_DayMonth:
+	sw	$t2, 16($sp)		# Luu lai gia tri distance(TIME1, TIME2)
+	sw	$a2, 12($sp)		# Luu lai bien kiem tra TIME1 < TIME2
+	# So sanh thang
+	lw	$a0, 4($sp)
+	lw 	$a1, 8($sp)
+	jal	compare_Month
+	addi	$t1, $v0, 0
+	beq	$t1, $zero, setMinus_distance
+	addi	$t0, $zero, 1
+	beq	$t1, $t0, set_distance
+	# So sanh ngay
+	lw	$a0, 4($sp)
+	lw 	$a1, 8($sp)
+	jal	compare_Day
+	addi	$t1, $v0, 0
+	beq	$t1, $zero, setMinus_distance
+	j	 set_distance
+set0_distance:
+	addi	$v0, $0, 0
+	j 	return_GT
+setMinus_distance:
+	lw	$v0, 16($sp)
+	addi	$v0, $v0, -1
+	j	return_GT
+set_distance:
+	lw	$v0, 16($sp)
+	j 	return_GT
+return_GT:
+	lw	$ra, 0($sp)
+	lw	$a0, 4($sp)
+	lw 	$a1, 8($sp)
+	addi	$sp, $sp, 12
+	jr	$ra
+# Ham so sanh thang cua 2 chuoi TIME_1 $a0 va TIME_2 $a1 voi $a2 la dieu kien kiem tra, $a2 = 1 TIME1 < TIME2
+# va nguoc lai, tra ve $v0 = 1 neu thoa nho hon, $v0 = 0 thi khoang cach - 1, $v0 = 2 tiep tuc so sanh ngay
+compare_Month:
+	addi	$sp, $sp, 20
+	sw 	$ra, 0($sp)
+	sw	$a0, 4($sp)
+	sw 	$a1, 8($sp)
+	sw	$a2, 16($sp)
+	jal	Month
+	addi	$t0, $zero, 0
+	sw	$t0, 12($sp)
+	lw	$a0, 8($sp)
+	jal	Month
+	addi	$t1, $zero, 0
+	
+	lw	$t0, 12($sp)
+	lw	$a2, 16($sp)
+	beq	$a2, $0, distance_Month
+	sub	$t2, $t1, $t0
+	j	check_cM
+# t2 = t0 - t1 neu $v0 = 0: TIME1 > TIME2
+distance_Month:
+	sub	$t2, $t0, $t1
+check_cM:
+	beq	$t2, $0, set2_cM
+	slt	$t3, $t2, $0
+	beq	$t3, $0, set1_cM
+	addi	$v0, $zero, 0 		# Thang cua nam nho hon lon hon
+	j	return_cM
+set1_cM:
+	addi	$v0, $0, 1
+	j	return_cM
+set2_cM:
+	addi	$v0, $zero, 2
+	j	return_cM
+return_cM:
+	lw 	$ra, 0($sp)
+	lw	$a0, 4($sp)
+	lw 	$a1, 8($sp)
+	lw	$a2, 16($sp)
+	addi	$sp, $sp, 20
+	jr	$ra	
+# Ham so sanh ngay cua 2 chuoi TIME_1 $a0 va TIME_2 $a1 voi $a2 la dieu kien kiem tra, $a2 = 1 TIME1 < TIME2
+# va nguoc lai, tra ve $v0 = 1 neu thoa nho hon hoac bang hoac TH dac biet nam nhuan, $v0 = 0 thi khoang cach - 1
+compare_Day:
+	addi	$sp, $sp, 24
+	sw 	$ra, 0($sp)
+	sw	$a0, 4($sp)
+	sw 	$a1, 8($sp)
+	sw	$a2, 12($sp)
+	
+	jal	Day
+	addi	$t0, $zero, 0
+	sw	$t0, 16($sp)
+	lw	$a0, 8($sp)
+	jal	Day
+	addi	$t1, $zero, 0
+	sw	$t1, 20($sp)
+	
+	lw	$t0, 16($sp)
+	lw	$a2, 12($sp)
+	beq	$a2, $0, distance_Day
+	sub	$t2, $t1, $t0
+	j	check_cD
+# t2 = t0 - t1 neu $v0 = 0: TIME1 > TIME2
+distance_Day:
+	sub	$t2, $t0, $t1
+check_cD:
+	slt	$t3, $t2, $0
+	beq	$t3, $0, set1_cD
+	addi	$t7, $0, 29
+	addi	$t6, $0, 28
+	lw	$a2, 12($sp)
+	# Kiem tra truong hop dac biet
+	beq	$a2, $zero, check_cD_LeapYear
+	lw	$t0, 16($sp)
+	bne	$t0, $t7, set0_cD
+	lw	$t1, 20($sp)
+	bne	$t1, $t6, set0_cD
+	j	set1_cD
+check_cD_LeapYear:
+	lw	$t0, 16($sp)
+	bne	$t0, $t6, set0_cD
+	lw	$t1, 20($sp)
+	bne	$t1, $t7, set0_cD
+	j	set1_cD
+set1_cD:
+	addi	$v0, $0, 1
+	j	return_cD
+set0_cD:
+	addi	$v0, $0, 0
+	j	return_cD
+return_cD:
+	lw 	$ra, 0($sp)
+	lw	$a0, 4($sp)
+	lw 	$a1, 8($sp)
+	lw	$a2, 12($sp)
+	addi	$sp, $sp, 24
+	jr	$ra	
