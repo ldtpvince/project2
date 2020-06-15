@@ -16,8 +16,10 @@
 	close_choice:	.asciiz "----------------------------------------------------------------\n"
 	str_day:	.space	3
 	str_month:	.space	3
+	str_nameMonth	.space 	4
 	str_year:	.space	5
 	time:		.space	11
+	time_mon: 	.space 	13
 	mon:		.asciiz	"Mon"
 	tue:		.asciiz	"Tues"
 	wed:		.asciiz	"Wed"
@@ -161,7 +163,7 @@ set30:
 set31:
 	addi	$v0,$zero,31
 	j	return_gd
-	#Nam khong nhuan hoac nam nhuan va thang khac 2
+#Nam khong nhuan hoac nam nhuan va thang khac 2
 notLeap:
 	beq	$a1,1,set31
 	beq	$a1,3,set31
@@ -527,3 +529,299 @@ getCentury:
 	div	$v0,$a0,100
 	sw	$a0,0($sp)
 	addi	$sp,$sp,4
+# Ham chuyen doi chuoi time $a0 voi kieu chuyen TYPE $a1, truyen vao chuoi $a2, tra ve $v0 la chuoi time_mon
+Convert: 
+	addi 	$sp, $sp, -24
+	sw	$ra, 0($sp)
+	sw	$a0, 16($sp)
+	sw	$a1, 20($sp)
+	#Lay ngay, thang, nam vao $t0, $t1, $t2
+	jal	Day
+	sw	$v0,4($sp)
+	jal	Month
+	sw	$v0,8($sp)
+	jal	Year
+	sw	$v0,12($sp)
+				
+	beq	$a1, 'A', typeA
+	beq	$a1, 'B', typeB
+	beq 	$a1, 'C', typeC
+typeA:
+	addi	$t7,$zero,47		#Dau '/'
+	# Thang
+	lw 	$a0, 8($sp)		# Lay gia tri cua Month
+	jal	numToStr
+	addi	$a0,$v0,0
+	addi	$a1,$zero,3
+	jal	std_Str
+	addi	$a1,$a0,0
+	addi	$a0,$a2,0
+	jal	sCopy
+	sb	$t7,2($a2)
+	# Ngay
+	lw 	$a0, 4($sp)		# Lay gia tri cua Day
+	jal	numToStr
+	addi	$a0,$v0,0
+	addi	$a1,$zero,3
+	jal	std_Str
+	addi	$a1,$a0,0
+	addi	$a0,$a2,3
+	jal	sCopy
+	sb	$t7,5($a2)
+	# Nam
+	lw 	$a0, 12($sp)		# Lay gia tri cua Year
+	jal	numToStr
+	addi	$a0,$v0,0
+	addi	$a1,$zero,5
+	jal	std_Str
+	addi	$a1,$a0,0
+	addi	$a0,$a2,6
+	jal	sCopy
+	sb	$0, 10($a2)		# Ket chuoi
+	j	return_Convert
+typeB:
+	addi	$t7, $zero, ' '		# Dau ' '
+	addi	$t6, $zero, ','		# Dau ','
+	# Thang
+	la	$a0, str_nameMonth
+	lw 	$a1, 8($sp)		# Lay gia tri cua Month
+	jal	nameOfMonth
+	addi	$a1,$a0,0
+	addi	$a0,$a2,0
+	jal	sCopy
+	sb	$t7,3($a2)
+	# Ngay
+	lw 	$a0, 4($sp)		# Lay gia tri cua Day
+	jal	numToStr
+	addi	$a0,$v0,0
+	addi	$a1,$zero,3
+	jal	std_Str
+	addi	$a1,$a0,0
+	addi	$a0,$a2,4
+	jal	sCopy
+	sb	$t6, 6($a2)
+	sb	$t7, 7($a2)
+	# Nam
+	lw 	$a0, 12($sp)		# Lay gia tri cua Year
+	jal	numToStr
+	addi	$a0,$v0,0
+	addi	$a1,$zero,5
+	jal	std_Str
+	addi	$a1,$a0,0
+	addi	$a0,$a2,8
+	jal	sCopy
+	sb	$0,12($a2)
+	
+	j	return_Convert
+typeC:
+	addi	$t7, $zero, ' '		# Dau ' '
+	addi	$t6, $zero, ','		# Dau ','
+	# Ngay
+	lw 	$a0, 4($sp)		# Lay gia tri cua Day
+	jal	numToStr
+	addi	$a0,$v0,0
+	addi	$a1,$zero,3
+	jal	std_Str
+	addi	$a1,$a0,0
+	addi	$a0,$a2,0
+	jal	sCopy
+	sb	$t7, 2($a2) 
+	# Thang
+	la	$a0, str_nameMonth
+	lw 	$a1, 8($sp)		# Lay gia tri cua Month
+	jal	nameOfMonth
+	addi	$a1,$a0,0
+	addi	$a0,$a2,3
+	jal	sCopy
+	sb	$t6, 6($a2)
+	sb	$t7, 7($a2)
+	# Nam
+	lw 	$a0, 12($sp)		# Lay gia tri cua Year
+	jal	numToStr
+	addi	$a0,$v0,0
+	addi	$a1,$zero,5
+	jal	std_Str
+	addi	$a1,$a0,0
+	addi	$a0,$a2,8
+	jal	sCopy
+	sb	$0,12($a2)
+	
+	j	return_Convert
+return_Convert:
+	lw	$ra, 0($sp)
+	lw 	$a0, 16($sp)
+	lw 	$a1, 20($sp)
+	addi	$sp, $sp, 24
+	jr 	$ra
+# Ham lay ngay tu chuoi TIME
+# int Day(char* TIME);
+# *TIME ~ $a0
+Day:
+	# Luu lai dia chi address
+	addi 	$sp, $sp, -8
+	sw 	$ra, 0($sp)
+	sw 	$a0, 4($sp)
+	
+	la	$a0, str_day
+	lw	$a1, 4($sp)
+	addi	$a2, $0, 0		# Vi tri DD/MM/YYYYY: 0 -> 1
+	addi 	$a3, $0, 1
+	jal	sCopy_Str
+	#Lay lai dia chi address
+	lw 	$a0, 4($sp)
+	lw 	$ra, 0($sp)
+	addi 	$sp, $sp, 8
+	jr 	$ra
+# Ham lay thang tu chuoi TIME
+# int Month(char* TIME);
+# *TIME ~ $a0
+Month:
+	# Luu lai dia chi address
+	addi 	$sp, $sp, -8
+	sw 	$ra, 0($sp)
+	sw 	$a0, 4($sp)
+	
+	la	$a0, str_month
+	lw	$a1, 4($sp)
+	addi	$a2, $0, 3		# Vi tri DD/MM/YYYYY: 3 -> 4
+	addi 	$a3, $0, 4
+	jal	sCopy_Str
+	#Lay lai dia chi address
+	lw 	$a0, 4($sp)
+	lw 	$ra, 0($sp)
+	addi 	$sp, $sp, 8
+	jr 	$ra
+# Ham lay nam tu chuoi TIME
+# int Year(char* TIME);
+# *TIME ~ $a0
+Year:
+	# Luu lai dia chi address
+	addi 	$sp, $sp, -8
+	sw 	$ra, 0($sp)
+	sw 	$a0, 4($sp)
+	
+	la	$a0, str_year
+	lw	$a1, 4($sp)
+	addi	$a2, $0, 6		# Vi tri DD/MM/YYYYY: 6 -> 9
+	addi 	$a3, $0, 9
+	jal	sCopy_Str
+	#Lay lai dia chi address
+	lw 	$a0, 4($sp)
+	lw 	$ra, 0($sp)
+	addi 	$sp, $sp, 8
+	jr 	$ra
+# Ham copy string chuoi $a1 tu vi tri $a2 den vi tri $a3 vao $a0
+sCopyStr:
+	addi	$sp, $sp, 4
+	sw	$ra, 0($sp)
+	addi	$t0, $a2, 0		# Dia chi bat dau copy
+	addi	$t1, $0, 0		# i = 0
+	slt	$t2, $a3, $t0
+	bne	$t2, 0, out_sCopyStr
+loop_sCopyStr:
+	slt	$t2, $a3, $t0
+	bne	$t2, 0, out_sCopyStr
+	addi 	$t3, $t3, $a1
+	addi	$t4, $t1, $a0
+	lb 	$t5, 0($t3)		# Doc byte cua $a1 vao $t5
+	sb	$t5, 0($t4)		# Luu $t5 vao $a0
+	
+	addi	$t1, $t1, 1
+	addi 	$t0, $t0, 1
+	j 	loop_sCopyStr
+out_sCopyStr:
+	addi 	$t4, $t1, $a0
+	sb	$0,  0($t4)		# Them '/0' cuoi chuoi $a0
+	lw 	$ra, 0($sp)
+	addi	$sp, $sp, 4
+	jr	$ra
+
+# Ham lay ten cua thang $a1 tra ve chuoi cho $a0
+nameOfMoth:
+	addi	$sp, $sp, -4
+	sw 	$a1, 0($sp)
+	
+	beq	$a1, 1, set_Jan
+	beq	$a1, 2, set_Feb
+	beq	$a1, 3, set_Mar
+	beq	$a1, 4, set_Apr
+	beq	$a1, 5, set_May
+	beq	$a1, 6, set_Jun
+	beq	$a1, 7, set_Jul
+	beq	$a1, 8, set_Aug
+	beq	$a1, 9, set_Sep
+	beq	$a1, 10, set_Oct
+	beq	$a1, 11, set_Nov
+	beq	$a1, 12, set_Dec
+# Cac ham dat ten thang
+set_Jan:	
+	addi	$a1, $zero, 'J'
+	addi	$a2, $zero, 'a'
+	addi	$a3, $zero, 'n'
+	j 	getName
+set_Feb:	
+	addi	$a1, $zero, 'F'
+	addi	$a2, $zero, 'e'
+	addi	$a3, $zero, 'b'
+	j 	 getName
+set_Mar:	
+	addi	$a1, $zero, 'M'
+	addi	$a2, $zero, 'a'
+	addi	$a3, $zero, 'r'
+	j 	 getName
+set_Apr:	
+	addi	$a1, $zero, 'A'
+	addi	$a2, $zero, 'p'
+	addi	$a3, $zero, 'r'
+	j 	 getName
+set_May:	
+	addi	$a1, $zero, 'M'
+	addi	$a2, $zero, 'a'
+	addi	$a3, $zero, 'y'
+	j 	 getName
+set_Jun:	
+	addi	$a1, $zero, 'J'
+	addi	$a2, $zero, 'u'
+	addi	$a3, $zero, 'n'
+	j 	 getName
+set_Jul:	
+	addi	$a1, $zero, 'J'
+	addi	$a2, $zero, 'u'
+	addi	$a3, $zero, 'l'
+	j 	 getName
+set_Aug:	
+	addi	$a1, $zero, 'A'
+	addi	$a2, $zero, 'u'
+	addi	$a3, $zero, 'g'
+	j 	 getName
+set_Sep:	
+	addi	$a1, $zero, 'S'
+	addi	$a2, $zero, 'e'
+	addi	$a3, $zero, 'p'
+	j 	 getName
+set_Oct:	
+	addi	$a1, $zero, 'O'
+	addi	$a2, $zero, 'o'
+	addi	$a3, $zero, 't'
+	j 	 getName
+set_Nov:	
+	addi	$a1, $zero, 'N'
+	addi	$a2, $zero, 'o'
+	addi	$a3, $zero, 'v'
+	j 	 getName
+set_Dec:	
+	addi	$a1, $zero, 'D'
+	addi	$a2, $zero, 'e'
+	addi	$a3, $zero, 'c'
+	j 	 getName	
+# Ket hop cac ky tu cua thang
+getName:
+	sb	$a1, 0($a0)
+	sb	$a2, 1($a0)
+	sb	$a3, 2($a0)
+	addi	$t0, $0, 47		# Dau ket thuc chuoi '/0'
+	sb	$t0, 3($a0)
+return_nameMon:
+	lw	$a1, 0($sp)
+	addi	$sp, $sp, 4
+	jr 	$ra
