@@ -801,7 +801,7 @@ set_Sep:
 	j 	 getName
 set_Oct:	
 	addi	$a1, $zero, 'O'
-	addi	$a2, $zero, 'o'
+	addi	$a2, $zero, 'c'
 	addi	$a3, $zero, 't'
 	j 	 getName
 set_Nov:	
@@ -819,7 +819,7 @@ getName:
 	sb	$a1, 0($a0)
 	sb	$a2, 1($a0)
 	sb	$a3, 2($a0)
-	addi	$t0, $0, 47		# Dau ket thuc chuoi '/0'
+	addi	$t0, $0, 0		# Dau ket thuc chuoi '/0'
 	sb	$t0, 3($a0)
 return_nameMon:
 	lw	$a1, 0($sp)
