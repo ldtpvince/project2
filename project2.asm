@@ -16,7 +16,7 @@
 	close_choice:	.asciiz "----------------------------------------------------------------\n"
 	str_day:	.space	3
 	str_month:	.space	3
-	str_nameMonth	.space 	4
+	str_nameMonth:	.space 	4
 	str_year:	.space	5
 	time:		.space	11
 	time_mon: 	.space 	13
@@ -27,6 +27,7 @@
 	fri:		.asciiz	"Fri"
 	sat:		.asciiz	"Sat"
 	sun:		.asciiz	"Sun"
+	address_day:	.word	sun,mon,tue,wed,thu,fri,sat,sun
 	t0:		.space	15
 	t1:		.space	15
 	test0:		.asciiz	"1234"
@@ -418,117 +419,79 @@ DATE:
 	addi	$sp,$sp,12
 	addi	$v0,$a3,0
 	jr	$ra
-#String TIME $a0, tra ve string $v0 la thu may trong tuan
+#String TIME $a0, mang string day $a1 tra ve string $v0 la thu may trong tuan
 Weekday:
-	subi	$sp,$sp,8
-	sw	$a0,0($sp)
-	sw	$ra,4($sp)
 	subi	$sp,$sp,12
+	sw	$a0,0($sp)
+	sw	$a1,4($sp)
+	sw	$ra,8($sp)
 	#Lay ngay, thang, nam vao $t0, $t1, $t2
+	subi	$sp,$sp,8
 	jal	Day
 	sw	$v0,0($sp)
 	jal	Month
 	sw	$v0,4($sp)
 	jal	Year
-	sw	$v0,8($sp)
-	#The ky
-	addi	$a0,$v0,0
-	jal	getCentury
-	lw	$t0,0($sp)
-	addi	$t0,$v0,0
-	sw	$t0,0($sp)
-	lw	$t2,8($sp)
-	addi	$a0,$t2,0
-	jal	LeapYear
-	lw	$t0,0($sp)	#result (sum)
+	addi	$t2,$v0,0
 	lw	$t1,4($sp)
-	lw	$t2,8($sp)
-	addi	$sp,$sp,12
-	div	$t3,$t2,100
-	mfhi	$t2
-	add	$t0,$t0,$t2
-	div	$t2,$t2,4
-	add	$t0,$t0,$t2
-	add	$t0,$t0,$t3
-	beq	$v0,$zero,notLeap_wd
-	beq	$t1,1,set6
-	beq	$t1,2,set2
-	#Tinh thu
-notLeap_wd:
-	beq	$t1,2,set3
-	beq	$t1,3,set3
-	beq	$t1,4,set6
-	beq	$t1,5,set1
-	beq	$t1,6,set4
-	beq	$t1,7,set6
-	beq	$t1,8,set2
-	beq	$t1,9,set5
-	beq	$t1,10,set0
-	beq	$t1,11,set3
-	beq	$t1,11,set5
-setM0:
-	addi	$t1,$zero,0
-	j	continue_y
-setM1:
-	addi	$t1,$zero,1
-	j	continue_y
-setM2:
-	addi	$t1,$zero,2
-	j	continue_y
-setM3:
-	addi	$t1,$zero,3
-	j	continue_y
-setM4:
-	addi	$t1,$zero,4
-	j	continue_y
-setM5:
-	addi	$t1,$zero,5
-	j	continue_y
-setM6:
-	addi	$t1,$zero,6
-continue_y:
-	add	$t0,$t0,$t1
-	div	$t0,$t0,7
-	mfhi	$t0
-	beq	$t0,0,setD0
-	beq	$t0,1,setD1
-	beq	$t0,2,setD2
-	beq	$t0,3,setD3
-	beq	$t0,4,setD4
-	beq	$t0,5,setD5
-	beq	$t0,6,setD6
-	sw	$a0,0($sp)
-	sw	$ra,4($sp)
+	lw	$t0,0($sp)
 	addi	$sp,$sp,8
-setD0:
-	la	$v0,sun
+	#$t2 = $t2 - ($t1<3)
+	slti	$t3,$t1,3
+	sub	$t2,$t2,$t3
+	#Sum ~ $t3 = ($t0 + $t2 + $t2/4 - $t2/100 + $t2/400 + $t4(tinh tu $t1)) mod 7
+	add	$t3,$zero,$t0
+	add	$t3,$t3,$t2
+	div	$t4,$t2,4
+	add	$t3,$t3,$t4
+	div	$t4,$t2,100
+	sub	$t3,$t3,$t4
+	div	$t4,$t2,400
+	add	$t3,$t3,$t4
+	beq	$t1,1,set_t4_0
+	beq	$t1,5,set_t4_0
+	beq	$t1,8,set_t4_1
+	beq	$t1,3,set_t4_2
+	beq	$t1,11,set_t4_2
+	beq	$t1,2,set_t4_3
+	beq	$t1,6,set_t4_3
+	beq	$t1,9,set_t4_4
+	beq	$t1,12,set_t4_4
+	beq	$t1,10,set_t4_6
+set_t4_5:
+	addi	$t4,$zero,5
+	j	continue_sum
+set_t4_6:
+	addi	$t4,$zero,0
+	j	continue_sum
+set_t4_4:
+	addi	$t4,$zero,4
+	j	continue_sum
+set_t4_3:
+	addi	$t4,$zero,3
+	j	continue_sum
+set_t4_2:
+	addi	$t4,$zero,2
+	j	continue_sum
+set_t4_1:
+	addi	$t4,$zero,1
+	j	continue_sum
+set_t4_0:
+	addi	$t4,$zero,1
+return_wd:
+	add	$t3,$t3,$t4
+	div	$t3,$t3,7
+	mfhi	$t3
+	#Truy xuat mang thu
+	sll	$t3,$t3,2
+	lw	$t4,4($sp)
+	add	$v0,$t3,$t4
+	#Thu hoi stack
+	lw	$a0,0($sp)
+	lw	$a1,4($sp)
+	lw	$ra,8($sp)
+	subi	$sp,$sp,12
 	jr	$ra
-setD1:
-	la	$v0,mon
-	jr	$ra
-setD2:
-	la	$v0,tue
-	jr	$ra
-setD3:
-	la	$v0,wed
-	jr	$ra
-setD4:
-	la	$v0,thu
-	jr	$ra
-setD5:
-	la	$v0,fri
-	jr	$ra
-setD6:
-	la	$v0,sat
-	jr	$ra
-#$a0 (nam), $v0 the ky
-getCentury:
-	subi	$sp,$sp,4
-	sw	$a0,0($sp)
-	addi	$a0,$a0,99
-	div	$v0,$a0,100
-	sw	$a0,0($sp)
-	addi	$sp,$sp,4
 # Ham chuyen doi chuoi time $a0 voi kieu chuyen TYPE $a1, truyen vao chuoi $a2, tra ve $v0 la chuoi time_mon
 Convert: 
 	addi 	$sp, $sp, -24
@@ -853,7 +816,7 @@ GetTime:
 	beq	$t3, $0, set_SmallerTime
 	addi	$a2, $zero, 0
 	# t2 = t0 - t1
-	addi	$t2, $t0, $t1
+	add	$t2, $t0, $t1
 	j	compare_DayMonth
 set_SmallerTime:	
 	addi 	$a2, $0, 1
