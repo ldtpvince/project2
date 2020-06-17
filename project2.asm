@@ -30,7 +30,8 @@
 	address_day:	.word	sun,mon,tue,wed,thu,fri,sat,sun
 	t0:		.space	15
 	t1:		.space	15
-	test0:		.asciiz	"17/06/2020"
+	test0:		.asciiz	"29/02/2020"
+	test1:		.asciiz	"28/02/2021"
 	.text
 .globl main
 main:
@@ -39,6 +40,20 @@ main:
 	jal	Weekday
 	addi	$a0,$v0,0
 	jal	print_Str
+	
+	la	$a0, test0
+	addi	$a1, $zero, 'C'
+	jal	Convert
+	addi	$a0, $v0, 0
+	jal	print_Str
+	
+	la	$a0, test0
+	la 	$a1, test1
+	jal	GetTime
+	addi	$a0, $v0, 0
+	addi	$v0, $0, 1
+	syscall
+	
 	addi	$v0,$zero,10
 	syscall
 #Nhap ngay thang nam
@@ -491,9 +506,9 @@ return_wd:
 	lw	$ra,8($sp)
 	subi	$sp,$sp,12
 	jr	$ra
-# Ham chuyen doi chuoi time $a0 voi kieu chuyen TYPE $a1, truyen vao chuoi $a2, tra ve $v0 la chuoi time_mon
+# Ham chuyen doi chuoi time $a0 voi kieu chuyen TYPE $a1, tra ve $v0 la chuoi time_mon
 Convert: 
-	addi 	$sp, $sp, -24
+	addi 	$sp, $sp, -28
 	sw	$ra, 0($sp)
 	sw	$a0, 16($sp)
 	sw	$a1, 20($sp)
@@ -504,10 +519,16 @@ Convert:
 	sw	$v0,8($sp)
 	jal	Year
 	sw	$v0,12($sp)
-				
-	beq	$a1, 'A', typeA
-	beq	$a1, 'B', typeB
-	beq 	$a1, 'C', typeC
+	
+	lw	$a1, 20($sp)
+	la	$t0, time_mon
+	sw	$t0, 24($sp)
+	addi	$t1, $zero, 'A'				
+	beq	$a1, $t1, typeA
+	addi	$t1, $zero, 'B'
+	beq	$a1, $t1, typeB
+	addi	$t1, $zero, 'C'
+	beq 	$a1, $t1, typeC
 typeA:
 	addi	$t7,$zero,47		#Dau '/'
 	# Thang
@@ -517,9 +538,11 @@ typeA:
 	addi	$a1,$zero,3
 	jal	std_Str
 	addi	$a1,$a0,0
-	addi	$a0,$a2,0
+	lw	$t0, 24($sp)
+	addi	$a0,$t0,0
 	jal	sCopy
-	sb	$t7,2($a2)
+	lw	$t0, 24($sp)
+	sb	$t7,2($t0)
 	# Ngay
 	lw 	$a0, 4($sp)		# Lay gia tri cua Day
 	jal	numToStr
@@ -527,9 +550,11 @@ typeA:
 	addi	$a1,$zero,3
 	jal	std_Str
 	addi	$a1,$a0,0
-	addi	$a0,$a2,3
+	lw	$t0, 24($sp)
+	addi	$a0,$t0,3
 	jal	sCopy
-	sb	$t7,5($a2)
+	lw	$t0, 24($sp)
+	sb	$t7,5($t0)
 	# Nam
 	lw 	$a0, 12($sp)		# Lay gia tri cua Year
 	jal	numToStr
@@ -537,9 +562,11 @@ typeA:
 	addi	$a1,$zero,5
 	jal	std_Str
 	addi	$a1,$a0,0
-	addi	$a0,$a2,6
+	lw	$t0, 24($sp)
+	addi	$a0,$t0,6
 	jal	sCopy
-	sb	$0, 10($a2)		# Ket chuoi
+	lw	$t0, 24($sp)
+	sb	$0, 10($t0)		# Ket chuoi
 	j	return_Convert
 typeB:
 	addi	$t7, $zero, ' '		# Dau ' '
@@ -549,9 +576,11 @@ typeB:
 	lw 	$a1, 8($sp)		# Lay gia tri cua Month
 	jal	nameOfMonth
 	addi	$a1,$a0,0
-	addi	$a0,$a2,0
+	lw	$t0, 24($sp)
+	addi	$a0,$t0,0
 	jal	sCopy
-	sb	$t7,3($a2)
+	lw	$t0, 24($sp)
+	sb	$t7,3($t0)
 	# Ngay
 	lw 	$a0, 4($sp)		# Lay gia tri cua Day
 	jal	numToStr
@@ -559,10 +588,12 @@ typeB:
 	addi	$a1,$zero,3
 	jal	std_Str
 	addi	$a1,$a0,0
-	addi	$a0,$a2,4
+	lw	$t0, 24($sp)
+	addi	$a0,$t0,4
 	jal	sCopy
-	sb	$t6, 6($a2)
-	sb	$t7, 7($a2)
+	lw	$t0, 24($sp)
+	sb	$t6, 6($t0)
+	sb	$t7, 7($t0)
 	# Nam
 	lw 	$a0, 12($sp)		# Lay gia tri cua Year
 	jal	numToStr
@@ -570,9 +601,11 @@ typeB:
 	addi	$a1,$zero,5
 	jal	std_Str
 	addi	$a1,$a0,0
-	addi	$a0,$a2,8
+	lw	$t0, 24($sp)
+	addi	$a0,$t0,8
 	jal	sCopy
-	sb	$0,12($a2)
+	lw	$t0, 24($sp)
+	sb	$0,12($t0)
 	
 	j	return_Convert
 typeC:
@@ -585,18 +618,22 @@ typeC:
 	addi	$a1,$zero,3
 	jal	std_Str
 	addi	$a1,$a0,0
-	addi	$a0,$a2,0
+	lw	$t0, 24($sp)
+	addi	$a0,$t0,0
 	jal	sCopy
-	sb	$t7, 2($a2) 
+	lw	$t0, 24($sp)
+	sb	$t7, 2($t0) 
 	# Thang
 	la	$a0, str_nameMonth
 	lw 	$a1, 8($sp)		# Lay gia tri cua Month
 	jal	nameOfMonth
 	addi	$a1,$a0,0
-	addi	$a0,$a2,3
+	lw	$t0, 24($sp)
+	addi	$a0,$t0,3
 	jal	sCopy
-	sb	$t6, 6($a2)
-	sb	$t7, 7($a2)
+	lw	$t0, 24($sp)
+	sb	$t6, 6($t0)
+	sb	$t7, 7($t0)
 	# Nam
 	lw 	$a0, 12($sp)		# Lay gia tri cua Year
 	jal	numToStr
@@ -604,16 +641,20 @@ typeC:
 	addi	$a1,$zero,5
 	jal	std_Str
 	addi	$a1,$a0,0
-	addi	$a0,$a2,8
+	lw	$t0, 24($sp)
+	addi	$a0,$t0,8
 	jal	sCopy
-	sb	$0,12($a2)
+	lw	$t0, 24($sp)
+	sb	$0,12($t0)
 	
 	j	return_Convert
 return_Convert:
+	lw	$t0, 24($sp)
+	addi	$v0, $t0, 0
 	lw	$ra, 0($sp)
 	lw 	$a0, 16($sp)
 	lw 	$a1, 20($sp)
-	addi	$sp, $sp, 24
+	addi	$sp, $sp, 28
 	jr 	$ra
 # Ham lay ngay tu chuoi TIME
 # int Day(char* TIME);
@@ -666,7 +707,11 @@ Year:
 	sw 	$ra, 0($sp)
 	sw 	$a0, 4($sp)
 	
-	la	$a0, str_year
+	addi 	$v0, $zero, 9
+	addi	$a0, $zero, 5
+	syscall
+	#la	$a0, str_year
+	addi	$a0, $v0, 0
 	lw	$a1, 4($sp)
 	addi	$a2, $0, 6		# Vi tri DD/MM/YYYYY: 6 -> 9
 	addi 	$a3, $0, 9
@@ -703,7 +748,6 @@ out_sCopyStr:
 	lw 	$ra, 0($sp)
 	addi	$sp, $sp, 4
 	jr	$ra
-
 # Ham lay ten cua thang $a1 tra ve chuoi cho $a0
 nameOfMonth:
 	addi	$sp, $sp, -4
@@ -796,18 +840,19 @@ return_nameMon:
 # int GetTime(char&* TIME_1, char* TIME_2)
 # Ham tinh khoang cach giua 2 chuoi TIME $a0, $a1 tra ve $v0
 GetTime:
-	addi	$sp, $sp, -12
+	addi	$sp, $sp, 24
 	sw	$ra, 0($sp)
 	sw	$a0, 4($sp)
 	sw	$a1, 8($sp)
 	
 	# Lay nam cua 2 TIME gan vao $t0, $t1
 	jal 	Year
-	addi	$t0, $v0, 0
+	sw	$v0, 12($sp)			# Luu Year1
 	lw	$a0, 8($sp)
 	jal	Year
 	addi	$t1, $v0, 0
 
+	lw	$t0, 12($sp)			# Gan $t0 = Year1
 	sub	$t2, $t1, $t0
 	beq	$t2, 0, set0_distance
 	# Kiem tra thoi gian nao lon hon, gan $a2 = 1 neu TIME_1 < TIME_2 va nguoc lai
@@ -822,10 +867,11 @@ set_SmallerTime:
 # So sanh ngay, thang cua 2 TIME_1 va TIME_2
 compare_DayMonth:
 	sw	$t2, 16($sp)		# Luu lai gia tri distance(TIME1, TIME2)
-	sw	$a2, 12($sp)		# Luu lai bien kiem tra TIME1 < TIME2
+	sw	$a2, 20($sp)		# Luu lai bien kiem tra TIME1 < TIME2
 	# So sanh thang
 	lw	$a0, 4($sp)
 	lw 	$a1, 8($sp)
+	lw	$a2, 20($sp)
 	jal	compare_Month
 	addi	$t1, $v0, 0
 	beq	$t1, $zero, setMinus_distance
@@ -834,6 +880,7 @@ compare_DayMonth:
 	# So sanh ngay
 	lw	$a0, 4($sp)
 	lw 	$a1, 8($sp)
+	lw	$a2, 20($sp)
 	jal	compare_Day
 	addi	$t1, $v0, 0
 	beq	$t1, $zero, setMinus_distance
@@ -852,22 +899,22 @@ return_GT:
 	lw	$ra, 0($sp)
 	lw	$a0, 4($sp)
 	lw 	$a1, 8($sp)
-	addi	$sp, $sp, 12
+	addi	$sp, $sp, 24
 	jr	$ra
 # Ham so sanh thang cua 2 chuoi TIME_1 $a0 va TIME_2 $a1 voi $a2 la dieu kien kiem tra, $a2 = 1 TIME1 < TIME2
 # va nguoc lai, tra ve $v0 = 1 neu thoa nho hon, $v0 = 0 thi khoang cach - 1, $v0 = 2 tiep tuc so sanh ngay
 compare_Month:
-	addi	$sp, $sp, 20
+	addi	$sp, $sp, -20
 	sw 	$ra, 0($sp)
 	sw	$a0, 4($sp)
 	sw 	$a1, 8($sp)
 	sw	$a2, 16($sp)
 	jal	Month
-	addi	$t0, $zero, 0
+	addi	$t0, $v0, 0
 	sw	$t0, 12($sp)
 	lw	$a0, 8($sp)
 	jal	Month
-	addi	$t1, $zero, 0
+	addi	$t1, $v0, 0
 	
 	lw	$t0, 12($sp)
 	lw	$a2, 16($sp)
@@ -899,18 +946,18 @@ return_cM:
 # Ham so sanh ngay cua 2 chuoi TIME_1 $a0 va TIME_2 $a1 voi $a2 la dieu kien kiem tra, $a2 = 1 TIME1 < TIME2
 # va nguoc lai, tra ve $v0 = 1 neu thoa nho hon hoac bang hoac TH dac biet nam nhuan, $v0 = 0 thi khoang cach - 1
 compare_Day:
-	addi	$sp, $sp, 24
+	addi	$sp, $sp, -24
 	sw 	$ra, 0($sp)
 	sw	$a0, 4($sp)
 	sw 	$a1, 8($sp)
 	sw	$a2, 12($sp)
 	
 	jal	Day
-	addi	$t0, $zero, 0
+	addi	$t0, $v0, 0
 	sw	$t0, 16($sp)
 	lw	$a0, 8($sp)
 	jal	Day
-	addi	$t1, $zero, 0
+	addi	$t1, $v0, 0
 	sw	$t1, 20($sp)
 	
 	lw	$t0, 16($sp)
@@ -928,6 +975,11 @@ check_cD:
 	addi	$t6, $0, 28
 	lw	$a2, 12($sp)
 	# Kiem tra truong hop dac biet
+	lw	$a0, 4($sp)
+	jal	Month
+	addi	$t4, $v0, 0
+	addi 	$t5, $0, 2
+	bne	$t4, $t5, set0_cD			
 	beq	$a2, $zero, check_cD_LeapYear
 	lw	$t0, 16($sp)
 	bne	$t0, $t7, set0_cD
@@ -953,8 +1005,6 @@ return_cD:
 	lw	$a2, 12($sp)
 	addi	$sp, $sp, 24
 	jr	$ra	
-	
-	
 	
 # bool LeapYearNumber(int year)
 LeapYearNumber: 
