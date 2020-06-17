@@ -666,8 +666,10 @@ Day:
 	lw	$a1, 4($sp)
 	addi	$a2, $0, 0		# Vi tri DD/MM/YYYYY: 0 -> 1
 	addi 	$a3, $0, 1
-	jal	sCopy_Str
+	jal	sCopyStr		## $a0 = DD
 	#Lay lai dia chi address
+	jal	strToNum
+	addi	$v0, $v0, 0
 	lw 	$a0, 4($sp)
 	lw 	$ra, 0($sp)
 	addi 	$sp, $sp, 8
@@ -685,8 +687,10 @@ Month:
 	lw	$a1, 4($sp)
 	addi	$a2, $0, 3		# Vi tri DD/MM/YYYYY: 3 -> 4
 	addi 	$a3, $0, 4
-	jal	sCopy_Str
+	jal	sCopyStr
 	#Lay lai dia chi address
+	jal	strToNum
+	addi	$v0, $v0, 0
 	lw 	$a0, 4($sp)
 	lw 	$ra, 0($sp)
 	addi 	$sp, $sp, 8
@@ -704,15 +708,17 @@ Year:
 	lw	$a1, 4($sp)
 	addi	$a2, $0, 6		# Vi tri DD/MM/YYYYY: 6 -> 9
 	addi 	$a3, $0, 9
-	jal	sCopy_Str
+	jal	sCopyStr
 	#Lay lai dia chi address
+	jal	strToNum
+	addi	$v0, $v0, 0
 	lw 	$a0, 4($sp)
 	lw 	$ra, 0($sp)
 	addi 	$sp, $sp, 8
 	jr 	$ra
 # Ham copy string chuoi $a1 tu vi tri $a2 den vi tri $a3 vao $a0
 sCopyStr:
-	addi	$sp, $sp, 4
+	addi	$sp, $sp, -4
 	sw	$ra, 0($sp)
 	addi	$t0, $a2, 0		# Dia chi bat dau copy
 	addi	$t1, $0, 0		# i = 0
