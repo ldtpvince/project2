@@ -30,17 +30,12 @@
 	address_day:	.word	sun,mon,tue,wed,thu,fri,sat,sun
 	t0:		.space	15
 	t1:		.space	15
-	test0:		.asciiz	"1234"
+	test0:		.asciiz	"22/11/2020\n"
 	.text
 .globl main
 main:
-	addi	$a0,$zero,10
-	addi	$a1,$zero,3
-	addi	$a2,$zero,123
-	la	$a3,time
-	jal	DATE
-	addi	$a0,$v0,0
-	jal	print_Str
+	la	$a0, test0
+	jal	NextLeapYear
 	addi	$v0,$zero,10
 	syscall
 #Nhap ngay thang nam
@@ -460,22 +455,22 @@ Weekday:
 	beq	$t1,10,set_t4_6
 set_t4_5:
 	addi	$t4,$zero,5
-	j	continue_sum
+	#j	continue_sum
 set_t4_6:
 	addi	$t4,$zero,0
-	j	continue_sum
+	#j	continue_sum
 set_t4_4:
 	addi	$t4,$zero,4
-	j	continue_sum
+	#j	continue_sum
 set_t4_3:
 	addi	$t4,$zero,3
-	j	continue_sum
+	#j	continue_sum
 set_t4_2:
 	addi	$t4,$zero,2
-	j	continue_sum
+	#j	continue_sum
 set_t4_1:
 	addi	$t4,$zero,1
-	j	continue_sum
+	#j	continue_sum
 set_t4_0:
 	addi	$t4,$zero,1
 return_wd:
@@ -706,7 +701,7 @@ out_sCopyStr:
 	jr	$ra
 
 # Ham lay ten cua thang $a1 tra ve chuoi cho $a0
-nameOfMoth:
+nameOfMonth:
 	addi	$sp, $sp, -4
 	sw 	$a1, 0($sp)
 	
@@ -797,7 +792,7 @@ return_nameMon:
 # int GetTime(char&* TIME_1, char* TIME_2)
 # Ham tinh khoang cach giua 2 chuoi TIME $a0, $a1 tra ve $v0
 GetTime:
-	addi	$sp, $sp, 
+	addi	$sp, $sp, -12
 	sw	$ra, 0($sp)
 	sw	$a0, 4($sp)
 	sw	$a1, 8($sp)
@@ -954,3 +949,113 @@ return_cD:
 	lw	$a2, 12($sp)
 	addi	$sp, $sp, 24
 	jr	$ra	
+	
+	
+	
+# bool LeapYearNumber(int year)
+LeapYearNumber: 
+	add	$t0, $zero, $a0
+	
+	addi	$t1, $zero, 4
+	rem	$t2, $t0, $t1
+	bne	$t2, $zero, LeapYearFalse
+	
+	addi	$t1, $zero, 100
+	rem	$t2, $t0, $t1
+	bne	$t2, $zero, LeapYearTrue
+	
+	addi	$t1, $zero, 400
+	rem	$t2, $t0, $t1
+	beq	$t2, $zero, LeapYearTrue
+	
+LeapYearFalse:
+	addi	$v0, $zero, 0
+	j	LeapYearExit
+LeapYearTrue:
+	addi	$v0, $zero, 1
+	j	LeapYearExit
+
+LeapYearExit:
+	jr	$ra
+	
+# bool LeapYear(char* TIME)
+LeapYear:
+	addi	$sp, $sp, -8
+	sw	$ra, 4($sp)
+	sw	$a0, 0($sp)
+	jal	Year
+	
+	add	$a0, $v0, $zero
+	jal	LeapYearNumber
+	
+	lw	$a0, 0($sp)
+	lw	$ra, 4($sp)
+	addi	$sp, $sp, 8
+	jr	$ra
+
+#int[] NextLeapYear(char* TIME)
+NextLeapYear:
+	addi	$sp, $sp, -32
+	sw	$ra, 0($sp)
+	sw	$a0, 4($sp)
+	jal	Year
+	
+	#dem nam gan nhat va lon hon nam hien tai
+	add	$t0, $v0, $zero	
+	
+	# dem so nam nhuan
+	addi	$t1, $zero, 0
+	
+	#dem nam gan nhat va nho hon nam hien tai
+	add	$t2, $v0, $zero
+	
+NextLeapYearLoop:
+	slti	$t3, $t1, 2
+	beq	$t3, $zero, NLYLoopOut
+	addi	$t0, $t0, 1
+	addi	$t2, $t2, -1
+	
+	sw	$t0, 8($sp)
+	sw	$t1, 12($sp)
+	sw	$t2, 16($sp)
+	sw	$t3, 20($sp)
+		
+	add	$a0, $t0, $zero
+	jal	LeapYearNumber
+	
+	lw	$t0, 8($sp)
+	lw	$t1, 12($sp)
+	lw	$t2, 16($sp)
+	lw	$t3, 20($sp)
+	
+	beq	$v0, $zero, NLYLine
+	addi	$t1, $t1, 1
+	sw	$t0, 24($sp)
+	
+NLYLine:
+	sw	$t0, 8($sp)
+	sw	$t1, 12($sp)
+	sw	$t2, 16($sp)
+	sw	$t3, 20($sp)
+	
+	add	$a0, $t2, $zero
+	jal	LeapYearNumber
+	
+	lw	$t0, 8($sp)
+	lw	$t1, 12($sp)
+	lw	$t2, 16($sp)
+	lw	$t3, 20($sp)
+	
+	beq	$v0, $zero, NextLeapYearLoop
+	addi	$t1, $t1, 1
+	sw	$t2, 28($sp)
+	j 	NextLeapYearLoop
+NLYLoopOut:
+	lw	$ra, 0($sp)
+	lw	$a0, 4($sp)
+	
+	lw	$v0, 24($sp)
+	lw	$v1, 28($sp)
+	
+	addi	$sp, $sp, 32
+	jr	$ra
