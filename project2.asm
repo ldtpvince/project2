@@ -455,22 +455,22 @@ Weekday:
 	beq	$t1,10,set_t4_6
 set_t4_5:
 	addi	$t4,$zero,5
-	#j	continue_sum
+	j	return_wd
 set_t4_6:
 	addi	$t4,$zero,0
-	#j	continue_sum
+	j	return_wd
 set_t4_4:
 	addi	$t4,$zero,4
-	#j	continue_sum
+	j	return_wd
 set_t4_3:
 	addi	$t4,$zero,3
-	#j	continue_sum
+	j	return_wd
 set_t4_2:
 	addi	$t4,$zero,2
-	#j	continue_sum
+	j	return_wd
 set_t4_1:
 	addi	$t4,$zero,1
-	#j	continue_sum
+	j	return_wd
 set_t4_0:
 	addi	$t4,$zero,1
 return_wd:
