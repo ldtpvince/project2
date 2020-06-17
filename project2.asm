@@ -16,7 +16,7 @@
 	close_choice:	.asciiz "----------------------------------------------------------------\n"
 	str_day:	.space	3
 	str_month:	.space	3
-	str_nameMonth:	.space 	4
+	str_Month:	.space 	4
 	str_year:	.space	5
 	time:		.space	11
 	time_mon: 	.space 	13
@@ -714,7 +714,7 @@ out_sCopyStr:
 	jr	$ra
 
 # Ham lay ten cua thang $a1 tra ve chuoi cho $a0
-nameOfMoth:
+nameOfMonth:
 	addi	$sp, $sp, -4
 	sw 	$a1, 0($sp)
 	
@@ -805,7 +805,7 @@ return_nameMon:
 # int GetTime(char&* TIME_1, char* TIME_2)
 # Ham tinh khoang cach giua 2 chuoi TIME $a0, $a1 tra ve $v0
 GetTime:
-	addi	$sp, $sp, 
+	addi	$sp, $sp, 12
 	sw	$ra, 0($sp)
 	sw	$a0, 4($sp)
 	sw	$a1, 8($sp)
@@ -882,7 +882,7 @@ compare_Month:
 	lw	$a2, 16($sp)
 	beq	$a2, $0, distance_Month
 	sub	$t2, $t1, $t0
-	j	_cM
+	j	check_cM
 # t2 = t0 - t1 neu $v0 = 0: TIME1 > TIME2
 distance_Month:
 	sub	$t2, $t0, $t1
