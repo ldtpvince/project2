@@ -30,12 +30,15 @@
 	address_day:	.word	sun,mon,tue,wed,thu,fri,sat,sun
 	t0:		.space	15
 	t1:		.space	15
-	test0:		.asciiz	"22/11/2020\n"
+	test0:		.asciiz	"17/06/2020"
 	.text
 .globl main
 main:
-	la	$a0, test0
-	jal	NextLeapYear
+	la	$a0,test0
+	la	$a1,address_day
+	jal	Weekday
+	addi	$a0,$v0,0
+	jal	print_Str
 	addi	$v0,$zero,10
 	syscall
 #Nhap ngay thang nam
@@ -480,7 +483,8 @@ return_wd:
 	#Truy xuat mang thu
 	sll	$t3,$t3,2
 	lw	$t4,4($sp)
-	add	$v0,$t3,$t4
+	add	$t5,$t3,$t4
+	lw	$v0,0($t5)
 	#Thu hoi stack
 	lw	$a0,0($sp)
 	lw	$a1,4($sp)
