@@ -16,7 +16,7 @@
 	close_choice:	.asciiz "----------------------------------------------------------------\n"
 	str_day:	.space	3
 	str_month:	.space	3
-	str_Month:	.space 	4
+	str_nameMonth	.space 	4
 	str_year:	.space	5
 	time:		.space	11
 	time_mon: 	.space 	13
@@ -423,89 +423,112 @@ Weekday:
 	subi	$sp,$sp,8
 	sw	$a0,0($sp)
 	sw	$ra,4($sp)
+	subi	$sp,$sp,12
 	#Lay ngay, thang, nam vao $t0, $t1, $t2
-	subi	$sp,$sp,8
 	jal	Day
 	sw	$v0,0($sp)
 	jal	Month
 	sw	$v0,4($sp)
 	jal	Year
-	addi	$t2,$v0,0
-	lw	$t1,4($sp)
+	sw	$v0,8($sp)
+	#The ky
+	addi	$a0,$v0,0
+	jal	getCentury
 	lw	$t0,0($sp)
-	addi	$sp,$sp,8
-	#$t2 = $t2 - ($t1<3)
-	slti	$t3,$t1,3
-	sub	$t2,$t2,$t3
-	#Sum ~ $t3 = ($t0 + $t2 + $t2/4 - $t2/100 + $t2/400 + $t4(tinh tu $t1)) mod 7
-	add	$t3,$zero,$t0
-	add	$t3,$t3,$t2
-	div	$t4,$t2,4
-	add	$t3,$t3,$t4
-	div	$t4,$t2,100
-	sub	$t3,$t3,$t4
-	div	$t4,$t2,400
-	add	$t3,$t3,$t4
-	beq	$t1,1,set_t4_0
-	beq	$t1,5,set_t4_0
-	beq	$t1,8,set_t4_1
-	beq	$t1,3,set_t4_2
-	beq	$t1,11,set_t4_2
-	beq	$t1,2,set_t4_3
-	beq	$t1,6,set_t4_3
-	beq	$t1,9,set_t4_4
-	beq	$t1,12,set_t4_4
-	beq	$t1,10,set_t4_6
-set_t4_5:
-	addi	$t4,$zero,5
-	j	continue_sum
-set_t4_6:
-	addi	$t4,$zero,0
-	j	continue_sum
-set_t4_4:
-	addi	$t4,$zero,4
-	j	continue_sum
-set_t4_3:
-	addi	$t4,$zero,3
-	j	continue_sum
-set_t4_2:
-	addi	$t4,$zero,2
-	j	continue_sum
-set_t4_1:
-	addi	$t4,$zero,1
-	j	continue_sum
-set_t4_0:
-	addi	$t4,$zero,1
-continue_sum:
-	add	$t3,$t3,$t4
-	div	$t3,$t3,7
-	mfhi	$t3
-return_wd_0:
-	la	$v0,sun
-	j	return_wd
-return_wd_1:
-	la	$v0,mon
-	j	return_wd
-return_wd_2:
-	la	$v0,tue
-	j	return_wd
-return_wd_3:
-	la	$v0,wed
-	j	return_wd
-return_wd_4:
-	la	$v0,thu
-	j	return_wd
-return_wd_5:
-	la	$v0,fri
-	j	return_wd
-return_wd_6:
-	la	$v0,sat
-	j	return_wd
-return_wd:
+	addi	$t0,$v0,0
+	sw	$t0,0($sp)
+	lw	$t2,8($sp)
+	addi	$a0,$t2,0
+	jal	LeapYear
+	lw	$t0,0($sp)	#result (sum)
+	lw	$t1,4($sp)
+	lw	$t2,8($sp)
+	addi	$sp,$sp,12
+	div	$t3,$t2,100
+	mfhi	$t2
+	add	$t0,$t0,$t2
+	div	$t2,$t2,4
+	add	$t0,$t0,$t2
+	add	$t0,$t0,$t3
+	beq	$v0,$zero,notLeap_wd
+	beq	$t1,1,set6
+	beq	$t1,2,set2
+	#Tinh thu
+notLeap_wd:
+	beq	$t1,2,set3
+	beq	$t1,3,set3
+	beq	$t1,4,set6
+	beq	$t1,5,set1
+	beq	$t1,6,set4
+	beq	$t1,7,set6
+	beq	$t1,8,set2
+	beq	$t1,9,set5
+	beq	$t1,10,set0
+	beq	$t1,11,set3
+	beq	$t1,11,set5
+setM0:
+	addi	$t1,$zero,0
+	j	continue_y
+setM1:
+	addi	$t1,$zero,1
+	j	continue_y
+setM2:
+	addi	$t1,$zero,2
+	j	continue_y
+setM3:
+	addi	$t1,$zero,3
+	j	continue_y
+setM4:
+	addi	$t1,$zero,4
+	j	continue_y
+setM5:
+	addi	$t1,$zero,5
+	j	continue_y
+setM6:
+	addi	$t1,$zero,6
+continue_y:
+	add	$t0,$t0,$t1
+	div	$t0,$t0,7
+	mfhi	$t0
+	beq	$t0,0,setD0
+	beq	$t0,1,setD1
+	beq	$t0,2,setD2
+	beq	$t0,3,setD3
+	beq	$t0,4,setD4
+	beq	$t0,5,setD5
+	beq	$t0,6,setD6
 	sw	$a0,0($sp)
 	sw	$ra,4($sp)
-	subi	$sp,$sp,8
+	addi	$sp,$sp,8
+setD0:
+	la	$v0,sun
 	jr	$ra
+setD1:
+	la	$v0,mon
+	jr	$ra
+setD2:
+	la	$v0,tue
+	jr	$ra
+setD3:
+	la	$v0,wed
+	jr	$ra
+setD4:
+	la	$v0,thu
+	jr	$ra
+setD5:
+	la	$v0,fri
+	jr	$ra
+setD6:
+	la	$v0,sat
+	jr	$ra
+#$a0 (nam), $v0 the ky
+getCentury:
+	subi	$sp,$sp,4
+	sw	$a0,0($sp)
+	addi	$a0,$a0,99
+	div	$v0,$a0,100
+	sw	$a0,0($sp)
+	addi	$sp,$sp,4
 # Ham chuyen doi chuoi time $a0 voi kieu chuyen TYPE $a1, truyen vao chuoi $a2, tra ve $v0 la chuoi time_mon
 Convert: 
 	addi 	$sp, $sp, -24
@@ -698,7 +721,7 @@ sCopyStr:
 loop_sCopyStr:
 	slt	$t2, $a3, $t0
 	bne	$t2, 0, out_sCopyStr
-	add 	$t3, $t3, $a1
+	add 	$t3, $t0, $a1
 	add	$t4, $t1, $a0
 	lb 	$t5, 0($t3)		# Doc byte cua $a1 vao $t5
 	sb	$t5, 0($t4)		# Luu $t5 vao $a0
@@ -714,7 +737,7 @@ out_sCopyStr:
 	jr	$ra
 
 # Ham lay ten cua thang $a1 tra ve chuoi cho $a0
-nameOfMonth:
+nameOfMoth:
 	addi	$sp, $sp, -4
 	sw 	$a1, 0($sp)
 	
@@ -805,7 +828,7 @@ return_nameMon:
 # int GetTime(char&* TIME_1, char* TIME_2)
 # Ham tinh khoang cach giua 2 chuoi TIME $a0, $a1 tra ve $v0
 GetTime:
-	addi	$sp, $sp, 12
+	addi	$sp, $sp, 
 	sw	$ra, 0($sp)
 	sw	$a0, 4($sp)
 	sw	$a1, 8($sp)
@@ -824,7 +847,7 @@ GetTime:
 	beq	$t3, $0, set_SmallerTime
 	addi	$a2, $zero, 0
 	# t2 = t0 - t1
-	add	$t2, $t0, $t1
+	addi	$t2, $t0, $t1
 	j	compare_DayMonth
 set_SmallerTime:	
 	addi 	$a2, $0, 1
