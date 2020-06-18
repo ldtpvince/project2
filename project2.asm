@@ -36,7 +36,6 @@
 .globl main
 main:
 	la	$a0,test0
-	la	$a1,address_day
 	jal	Weekday
 	addi	$a0,$v0,0
 	jal	print_Str
@@ -432,12 +431,11 @@ DATE:
 	addi	$sp,$sp,12
 	addi	$v0,$a3,0
 	jr	$ra
-#String TIME $a0, mang string day $a1 tra ve string $v0 la thu may trong tuan
+#String TIME $a0, tra ve string $v0 la thu may trong tuan
 Weekday:
-	subi	$sp,$sp,12
+	subi	$sp,$sp,8
 	sw	$a0,0($sp)
-	sw	$a1,4($sp)
-	sw	$ra,8($sp)
+	sw	$ra,4($sp)
 	#Lay ngay, thang, nam vao $t0, $t1, $t2
 	subi	$sp,$sp,8
 	jal	Day
@@ -497,14 +495,13 @@ return_wd:
 	mfhi	$t3
 	#Truy xuat mang thu
 	sll	$t3,$t3,2
-	lw	$t4,4($sp)
+	la	$t4,address_day
 	add	$t5,$t3,$t4
 	lw	$v0,0($t5)
 	#Thu hoi stack
 	lw	$a0,0($sp)
-	lw	$a1,4($sp)
-	lw	$ra,8($sp)
-	subi	$sp,$sp,12
+	lw	$ra,4($sp)
+	addi	$sp,$sp,8
 	jr	$ra
 # Ham chuyen doi chuoi time $a0 voi kieu chuyen TYPE $a1, tra ve $v0 la chuoi time_mon
 Convert: 
