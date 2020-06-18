@@ -1,10 +1,11 @@
 	.data
-	re_input:	.asciiz	"\nMoi ban nhap lai.\n"
+	re_input:	.asciiz	"Moi ban nhap lai.\n"
 	re_input_noNewline:.asciiz "Moi ban nhap lai.\n"
-	input_day: 	.asciiz	"Nhap ngay DAY:"
-	input_month:	.asciiz "\nNhap thang MONTH:"
-	input_year:	.asciiz "\nNhap nam YEAR:"
-	choice:		.asciiz "\n----------Ban hay chon 1 trong cac thao tac duoi day----------\n"
+	input_day: 	.asciiz	"Nhap ngay DAY: "
+	input_month:	.asciiz "Nhap thang MONTH: "
+	input_year:	.asciiz "Nhap nam YEAR: "
+	endl:		.asciiz "\n"
+	choice:		.asciiz "----------Ban hay chon 1 trong cac thao tac duoi day----------"
 	choice1:	.asciiz "1.Xuat string TIME theo dinh dang DD/MM/YYYY\n"
 	choice2:	.asciiz "2.Chuyen doi string TIME thanh mot trong cac dinh dang sau:\n"
 	choice2_A:	.asciiz "\tA.MM/DD/YYYY\n"
@@ -165,7 +166,7 @@ choice1_proc:
 	addi	$v0, $zero, 4
 	syscall
 	
-	# in D?/MM/YYYY
+	# in DD/MM/YYYY
 	addi	$sp, $sp, -4
 	sw	$s0, 0($sp)
 	addi	$a0, $s0, 0
@@ -435,7 +436,7 @@ return_gd:
 	lw	$ra,8($sp)
 	addi	$sp,$sp,12
 	jr	$ra
-#In string vi tri $a0, doc string co $a1 ki tu vao vi tri $a2 (co chuan hoa)
+#In string vi tri $a0, doc string co $a1 ki tu vao vi tri $a2 (co chuan hoa).
 request_Read:
 	subi	$sp,$sp,8
 	sw	$a0,0($sp)
@@ -445,6 +446,14 @@ request_Read:
 	#Doc $a2
 	addi	$a0,$a2,0
 	jal	read_Str
+	jal	findEndStr
+	lb	$t0,0($v0)
+	beq	$t0,'\n',j_std
+	addi	$t1,$a0,0
+	la	$a0,endl
+	jal	print_Str
+	addi	$a0,$t1,0
+j_std:
 	jal	std_Str
 	#Thu hoi
 	lw	$a0,0($sp)
