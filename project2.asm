@@ -41,18 +41,10 @@ main:
 	jal	input
 	
 check_input:
-	la	$a0, input_day
-	la	$a1, input_month
-	la	$a2, input_year
+	la	$a0, str_day
+	la	$a1, str_month
+	la	$a2, str_year
 	jal	check_Valid
-	
-	add	$t0, $v0, $zero
-	beq	$t0, $zero, input_again
-	
-	la	$a0, input_day
-	la	$a1, input_month
-	la	$a2, input_year
-	jal	check_Logic
 	
 	add	$t0, $v0, $zero
 	beq	$t0, $zero, input_again
@@ -178,6 +170,7 @@ read_DMY:
 	lw	$ra,0($sp)
 	addi	$sp,$sp,4
 	jr 	$ra
+	
 #Nhap lai
 re_Input:
 	addi	$sp, $sp, -4
