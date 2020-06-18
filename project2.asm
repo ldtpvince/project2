@@ -47,21 +47,9 @@
 #-------------------------------------------------TP--------------------------------------------------#
 .globl main
 main:
+	la	$a0,time
 	jal	input
-	
-check_input:
-	la	$a0, str_day
-	la	$a1, str_month
-	la	$a2, str_year
-	jal	check_Valid
-	
-	add	$t0, $v0, $zero
-	beq	$t0, $zero, input_again
-	bne	$t0, $zero, menu
-	
-input_again:
-	#jal	re_Input
-	#j	check_input
+	j	menu
 	
 proc_input:
 	addi	$sp, $sp, -12
@@ -282,89 +270,89 @@ exit_Menu:
 	
 
 #-------------------------------------------------TA--------------------------------------------------#
-#Nhap ngay thang nam
 input:
-	subi 	$sp,$sp,4
-	sw	$ra,0($sp)
+	subi 	$sp,$sp,8
+	sw	$a0,0($sp)
+	sw	$ra,4($sp)
 read_DMY:
 	#Nhap ngay
 	la	$a0,input_day
 	addi	$a1,$zero,3
 	la	$a2,str_day
 	jal	request_Read
-	
 	#Nhap thang
 	la	$a0,input_month
 	addi	$a1,$zero,3
 	la	$a2,str_month
 	jal	request_Read
-	
 	#Nhap nam
 	la	$a0,input_year
 	addi	$a1,$zero,5
 	la	$a2,str_year
 	jal	request_Read
-	
+	#Kiem tra
+	la	$a0,str_day
+	la	$a1,str_month
+	la	$a2,str_year
+	jal	check_Valid
+	beq	$v0,$zero,re_Input
+	#Luu vao $a0
+	addi	$t7,$zero,47
+	lw	$a0,0($sp)
+	la	$a1,str_day
+	jal	sCopy
+	addi	$a0,$a0,3
+	sb	$t7,-1($a0)
+	la	$a1,str_month
+	jal	sCopy
+	addi	$a0,$a0,3
+	sb	$t7,-1($a0)
+	la	$a1,str_year
+	jal	sCopy
 	#Thu hoi stack
-	lw	$ra,0($sp)
-	addi	$sp,$sp,4
+	lw	$a0,0($sp)
+	lw	$ra,4($sp)
+	addi	$sp,$sp,8
 	jr 	$ra
-	
 #Nhap lai
 re_Input:
-	addi	$sp, $sp, -4
-	sw	$ra, 0($sp)	
-	
+	addi	$t0,$a0,0
 	la	$a0,re_input
 	jal	print_Str
+	addi	$a0,$t0,0
 	jal	read_DMY
-	
-	lw	$ra, 0($sp)
-	jr	$ra
-	
 #Kiem tra hop le 3 string $a0 (day), $a1 (month), $a2 (year). Ket qua tra ve $v0, 1:dung, 0:sai
 check_Valid:
+	subi	$sp,$sp,16
 	sw	$a0,0($sp)
 	sw	$a1,4($sp)
 	sw	$a2,8($sp)
 	sw	$ra,12($sp)
-	
 	#Kiem tra co toan so khong?
 	jal	checkAllNum
 	beq	$v0,$zero,return_cv
+	
 	lw	$a0,4($sp)
 	jal	checkAllNum
 	beq	$v0,$zero,return_cv
+	
 	lw	$a0,8($sp)
 	jal	checkAllNum
 	beq	$v0,$zero,return_cv
-	#Trich xuat ngay, thang, nam
-	subi	$sp,$sp,8
-	lw	$t0,8($sp)
-	
+	#Trich xuat nam, thang, ngay
+	lw	$a0,8($sp)
 	jal	strToNum
+	addi	$a2,$v0,0
 	
-	sw	$v0,0($sp)
-	lw	$t0,12($sp)
-	
+	lw	$a0,4($sp)
 	jal	strToNum
-	
-	sw	$v0,4($sp)
-	lw	$t0,16($sp)
-	
-	jal	strToNum
+	addi	$a1,$v0,0
 	
 	lw	$a0,0($sp)
-	lw	$a1,4($sp)
-	
-	addi	$a2,$v0,0
-	addi	$sp,$sp,8
-	
+	jal	strToNum
+	addi	$a0,$v0,0
+	#Kiem tra logic
 	jal	check_Logic
-	
-	beq	$v0,$zero,return_cv
-	#Kiem tra ngay thang nam
-	addi	$v0,$v0,1
 return_cv:
 	lw	$a0,0($sp)
 	lw	$a1,4($sp)
@@ -372,7 +360,6 @@ return_cv:
 	lw	$ra,12($sp)
 	addi	$sp,$sp,16
 	jr	$ra
-	
 #Kiem tra tinh logic cua 3 so $a0 (ngay), $a1 (thang), $a2 (nam). $v0=1: dung, $v0=0: sai
 check_Logic:
 	addi	$v0,$zero,0	#false
@@ -381,27 +368,23 @@ check_Logic:
 	sw	$a1,4($sp)
 	sw	$a2,8($sp)
 	sw	$ra,12($sp)
-	
 	#Kiem tra nam
 	slti	$t0,$a2,1900
 	bne	$t0,$zero,return_cl
-	
 	#Kiem tra thang
 	slti	$t0,$a1,1
 	bne	$t0,$zero,return_cl
 	slti	$t0,$a1,13
 	beq	$t0,$zero,return_cl
-	
 	#Kiem tra ngay
 	slti	$t0,$a0,1
 	bne	$t0,$zero,return_cl
 	addi	$a0,$a2,0
-	
-	jal	getDate
-	
+	jal	getDate	#Lay so ngay thang $a1, nam $a0
 	lw	$a0,0($sp)
 	addi	$v0,$v0,1
 	slt	$t0,$a0,$v0
+	addi	$v0,$zero,0	#False
 	beq	$t0,$zero,return_cl
 	addi	$v0,$zero,1	#true
 return_cl:
@@ -411,15 +394,14 @@ return_cl:
 	lw	$ra,12($sp)
 	addi	$sp,$sp,16
 	jr	$ra
-	
 #Lay ngay cua nam $a0 va thang $a1
 getDate:
 	subi	$sp,$sp,12
 	sw	$a0,0($sp)
 	sw	$a1,4($sp)
 	sw	$ra,8($sp)
-	#Neu la nam nhuan va la thang 2
-	jal	LeapYear
+	#Neu la nam nhuan va la thang 2 thi toi notLeap
+	jal	LeapYearNumber
 	beq	$v0,$zero,notLeap
 	bne	$a1,2,notLeap
 	addi	$v0,$zero,29
@@ -453,42 +435,35 @@ return_gd:
 	lw	$ra,8($sp)
 	addi	$sp,$sp,12
 	jr	$ra
-	
 #In string vi tri $a0, doc string co $a1 ki tu vao vi tri $a2 (co chuan hoa)
 request_Read:
 	subi	$sp,$sp,8
 	sw	$a0,0($sp)
-	sw	$ra, 4($sp)
-	
+	sw	$ra,4($sp)
+	#In $a0
 	jal	print_Str
+	#Doc $a2
 	addi	$a0,$a2,0
 	jal	read_Str
-	addi	$a1,$zero,3
 	jal	std_Str
-	
+	#Thu hoi
 	lw	$a0,0($sp)
-	lw	$ra, 4($sp)
-	
+	lw	$ra,4($sp)
 	addi	$sp,$sp,8
 	jr	$ra
-	
 #Chuan hoa string $a0 du $a1 ki tu (tinh ca '\0' sau khi chuan hoa), xoa bo '\n' trong string
 std_Str:
 	subi	$sp,$sp,8
 	sw	$ra,0($sp)
-	
-	#$t0 chua dia chi cuoi string
-	la	$t0,0($a0)
+	#$t0 chua dia chi cuoi string cap phat
+	addi	$t0,$a0,0
 	add	$t0,$t0,$a1
 	subi	$t0,$t0,1
 	sb	$zero,0($t0)
-	
+	#$t1 chua di chi cuoi string (ket thuc '\n' hoac '\0')
 	sw	$t0,4($sp)
-	
 	jal	findEndStr
-	
 	lw	$t0,4($sp)
-	
 	addi	$t1,$v0,0
 	addi	$t3,$zero,48	#ki tu 0
 loop_ssn:
@@ -510,7 +485,6 @@ return_ssn:
 	lw	$ra, 0($sp)
 	addi	$sp,$sp,8
 	jr	$ra
-	
 #Tim vi tri '\0' hoac '\n' cua string $a0, ket qua tra ve $v0
 findEndStr:
 	addi	$v0,$a0,0
@@ -663,11 +637,6 @@ return_nts:
 	addi	$sp,$sp,8
 	la	$v0,t1
 	jr	$ra
-	
-	
-	
-	
-#-------------------------------------------------DD--------------------------------------------------#
 #Truyen vao 3 so $a0(day),$a1(month),$a2(year), string $a3. Ket qua tra ve la string $v0 dinh dang DD/MM/YYYY
 DATE:
 	#Khoi tao vung nho
@@ -718,7 +687,6 @@ Weekday:
 	subi	$sp,$sp,8
 	sw	$a0,0($sp)
 	sw	$ra,4($sp)
-	
 	#Lay ngay, thang, nam vao $t0, $t1, $t2
 	subi	$sp,$sp,8
 	jal	Day
@@ -776,19 +744,17 @@ return_wd:
 	add	$t3,$t3,$t4
 	div	$t3,$t3,7
 	mfhi	$t3
-	
 	#Truy xuat mang thu
 	sll	$t3,$t3,2
 	lw	$t4, address_day
 	add	$t5,$t3,$t4
 	lw	$v0,0($t5)
-	
 	#Thu hoi stack
 	lw	$a0,0($sp)
 	lw	$ra,4($sp)
 	subi	$sp,$sp,8
 	jr	$ra
-	
+#-------------------------------------------------DD--------------------------------------------------#
 # Ham chuyen doi chuoi time $a0 voi kieu chuyen TYPE $a1, tra ve $v0 la chuoi time_mon
 Convert: 
 	addi 	$sp, $sp, -28
