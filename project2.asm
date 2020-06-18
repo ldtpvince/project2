@@ -13,7 +13,10 @@
 	choice4:	.asciiz "4.Kiem tra nam trong string TIME co phai la nam nhuan khong?\n"
 	choice5:	.asciiz "5.Cho biet khoang thoi gian giua string TIME_1 va TIME_2.\n"
 	choice6:	.asciiz "6.Cho biet 2 nam nhuan gan nhat voi nam trong string time.\n"
+	choice7:	.asciiz "7.Ket thuc chuong trinh\n"
 	close_choice:	.asciiz "----------------------------------------------------------------\n"
+	input_choice:	.asciiz "Lua chon: "
+	output_result:	.asciiz "Ket qua: "
 	str_day:	.space	3
 	str_month:	.space	3
 	str_nameMonth:	.space 	4
@@ -35,26 +38,122 @@
 	.text
 .globl main
 main:
-	la	$a0,test0
-	jal	Weekday
-	addi	$a0,$v0,0
-	jal	print_Str
+	jal	input
 	
-	la	$a0, test0
-	addi	$a1, $zero, 'C'
-	jal	Convert
-	addi	$a0, $v0, 0
-	jal	print_Str
+check_input:
+	la	$a0, input_day
+	la	$a1, input_month
+	la	$a2, input_year
+	jal	check_Valid
 	
-	la	$a0, test0
-	la 	$a1, test1
-	jal	GetTime
-	addi	$a0, $v0, 0
-	addi	$v0, $0, 1
+	add	$t0, $v0, $zero
+	beq	$t0, $zero, input_again
+	
+	la	$a0, input_day
+	la	$a1, input_month
+	la	$a2, input_year
+	jal	check_Logic
+	
+	add	$t0, $v0, $zero
+	beq	$t0, $zero, input_again
+	bne	$t0, $zero, menu
+	
+input_again:
+	jal	re_Input
+	j	check_input
+
+menu:
+	print:
+		la	$a0, choice
+		addi	$v0, $zero, 4
+		syscall
+		
+		la	$a0, choice1
+		addi	$v0, $zero, 4
+		syscall
+		
+		la	$a0, choice2
+		addi	$v0, $zero, 4
+		syscall
+		
+		la	$a0, choice2_A
+		addi	$v0, $zero, 4
+		syscall
+		
+		la	$a0, choice2_B
+		addi	$v0, $zero, 4
+		syscall
+		
+		la	$a0, choice2_C
+		addi	$v0, $zero, 4
+		syscall
+		
+		la	$a0, choice3
+		addi	$v0, $zero, 4
+		syscall
+		
+		la	$a0, choice4
+		addi	$v0, $zero, 4
+		syscall
+		
+		la	$a0, choice5
+		addi	$v0, $zero, 4
+		syscall
+		
+		la	$a0, choice6
+		addi	$v0, $zero, 4
+		syscall
+		
+		la	$a0, choice7
+		addi	$v0, $zero, 4
+		syscall
+		
+		la	$a0, close_choice
+		addi	$v0, $zero, 4
+		syscall
+		
+		la	$a0, input_choice
+		addi	$v0, $zero, 4
+		syscall
+	
+		add	$v0, $zero, 5
+		syscall
+		add	$s0, $v0, 0
+		
+	beq	$s0, 1, choice1_proc
+	beq	$s0, 2, choice2_proc
+	beq	$s0, 3, choice3_proc
+	beq	$s0, 4, choice4_proc
+	beq	$s0, 5, choice5_proc
+	beq	$s0, 6, choice6_proc
+	beq	$s0, 7, exit_Menu
+	
+	la	$a0, re_input
+	addi	$v0, $zero, 4
 	syscall
 	
-	addi	$v0,$zero,10
+choice1_proc:
+	la	$a0, output_result
+	addi	$v0, $zero, 4
 	syscall
+	
+	
+choice2_proc:
+
+choice3_proc:
+
+choice4_proc:
+
+choice5_proc:
+
+choice6_proc:
+
+exit_Menu:
+
+	addi	$v0, $zero, 10
+	syscall
+	
+	
 #Nhap ngay thang nam
 input:
 	subi 	$sp,$sp,4
@@ -81,9 +180,15 @@ read_DMY:
 	jr 	$ra
 #Nhap lai
 re_Input:
+	addi	$sp, $sp, -4
+	sw	$ra, 0($sp)	
+	
 	la	$a0,re_input
 	jal	print_Str
-	j	read_DMY
+	jal	read_DMY
+	
+	lw	$ra, 0($sp)
+	jr	$ra
 #Kiem tra hop le 3 string $a0 (day), $a1 (month), $a2 (year). Ket qua tra ve $v0, 1:dung, 0:sai
 check_Valid:
 	sw	$a0,0($sp)
@@ -113,7 +218,7 @@ check_Valid:
 	lw	$a1,4($sp)
 	addi	$a2,$v0,0
 	addi	$sp,$sp,8
-	jal	checkLogic
+	jal	check_Logic
 	beq	$v0,$zero,return_cv
 	#Kiem tra ngay thang nam
 	addi	$v0,$v0,1
@@ -125,7 +230,7 @@ return_cv:
 	addi	$sp,$sp,16
 	jr	$ra
 #Kiem tra tinh logic cua 3 so $a0 (ngay), $a1 (thang), $a2 (nam). $v0=1: dung, $v0=0: sai
-checkLogic:
+check_Logic:
 	addi	$v0,$zero,0	#false
 	subi	$sp,$sp,16
 	sw	$a0,0($sp)
@@ -199,30 +304,38 @@ return_gd:
 	jr	$ra
 #In string vi tri $a0, doc string co $a1 ki tu vao vi tri $a2 (co chuan hoa)
 request_Read:
-	subi	$sp,$sp,4
+	subi	$sp,$sp,8
 	sw	$a0,0($sp)
+	sw	$ra, 4($sp)
+	
 	jal	print_Str
-	addi	$a0,$s2,0
+	addi	$a0,$a2,0
 	jal	read_Str
 	addi	$a1,$zero,3
 	jal	std_Str
+	
 	lw	$a0,0($sp)
+	lw	$ra, 4($sp)
+	
 	addi	$sp,$sp,4
 	jr	$ra
 #Chuan hoa string $a0 du $a1 ki tu (tinh ca '\0' sau khi chuan hoa), xoa bo '\n' trong string
 std_Str:
-	subi	$sp,$sp,4
+	subi	$sp,$sp,8
 	sw	$ra,0($sp)
+	
 	#$t0 chua dia chi cuoi string
 	la	$t0,0($a0)
 	add	$t0,$t0,$a1
 	subi	$t0,$t0,1
 	sb	$zero,0($t0)
-	subi	$sp,$sp,4
-	sw	$t0,0($sp)
+	
+	sw	$t0,4($sp)
+	
 	jal	findEndStr
-	lw	$t0,0($sp)
-	addi	$sp,$sp,4
+	
+	lw	$t0,4($sp)
+	
 	addi	$t1,$v0,0
 	addi	$t3,$zero,48	#ki tu 0
 loop_ssn:
@@ -241,8 +354,8 @@ loop_ins_0:
 	subi	$t0,$t0,1
 	j	loop_ins_0
 return_ssn:
-	lw	$ra,0($sp)
-	addi	$sp,$sp,4
+	lw	$ra, 0($sp)
+	addi	$sp,$sp,8
 	jr	$ra
 #Tim vi tri '\0' hoac '\n' cua string $a0, ket qua tra ve $v0
 findEndStr:
@@ -431,11 +544,12 @@ DATE:
 	addi	$sp,$sp,12
 	addi	$v0,$a3,0
 	jr	$ra
-#String TIME $a0, tra ve string $v0 la thu may trong tuan
+#String TIME $a0, mang string day $a1 tra ve string $v0 la thu may trong tuan
 Weekday:
-	subi	$sp,$sp,8
+	subi	$sp,$sp,12
 	sw	$a0,0($sp)
-	sw	$ra,4($sp)
+	sw	$a1,4($sp)
+	sw	$ra,8($sp)
 	#Lay ngay, thang, nam vao $t0, $t1, $t2
 	subi	$sp,$sp,8
 	jal	Day
@@ -495,13 +609,14 @@ return_wd:
 	mfhi	$t3
 	#Truy xuat mang thu
 	sll	$t3,$t3,2
-	la	$t4,address_day
+	lw	$t4,4($sp)
 	add	$t5,$t3,$t4
 	lw	$v0,0($t5)
 	#Thu hoi stack
 	lw	$a0,0($sp)
-	lw	$ra,4($sp)
-	addi	$sp,$sp,8
+	lw	$a1,4($sp)
+	lw	$ra,8($sp)
+	subi	$sp,$sp,12
 	jr	$ra
 # Ham chuyen doi chuoi time $a0 voi kieu chuyen TYPE $a1, tra ve $v0 la chuoi time_mon
 Convert: 
