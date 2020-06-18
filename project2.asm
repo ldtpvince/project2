@@ -1,11 +1,9 @@
 	.data
 	re_input:	.asciiz	"Moi ban nhap lai.\n"
-	re_input_noNewline:.asciiz "Moi ban nhap lai.\n"
-	input_day: 	.asciiz	"Nhap ngay DAY: "
-	input_month:	.asciiz "Nhap thang MONTH: "
-	input_year:	.asciiz "Nhap nam YEAR: "
-	endl:		.asciiz "\n"
-	choice:		.asciiz "----------Ban hay chon 1 trong cac thao tac duoi day----------"
+	input_day: 	.asciiz	"Nhap ngay DAY:"
+	input_month:	.asciiz "Nhap thang MONTH:"
+	input_year:	.asciiz "Nhap nam YEAR:"
+	choice:		.asciiz "\n----------Ban hay chon 1 trong cac thao tac duoi day----------\n"
 	choice1:	.asciiz "1.Xuat string TIME theo dinh dang DD/MM/YYYY\n"
 	choice2:	.asciiz "2.Chuyen doi string TIME thanh mot trong cac dinh dang sau:\n"
 	choice2_A:	.asciiz "\tA.MM/DD/YYYY\n"
@@ -20,9 +18,14 @@
 	close_choice:	.asciiz "----------------------------------------------------------------\n"
 	inputChoice_str:.asciiz "Lua chon: "
 	output_result:	.asciiz "Ket qua: "
-	is_leap_year:	.asciiz "Day la nam nhuan.\n"
-	not_leap_year:	.asciiz "Day khong phai la nam nhuan.\n"
+	endl:		.asciiz "\n"
+	
+	choice2_option:	.asciiz "Hay chon dang bien doi(A/B/C): "
+	
+	is_leap_year:	.asciiz "Day la nam nhuan."
+	not_leap_year:	.asciiz "Day khong phai la nam nhuan."
 	coma:		.asciiz ", "
+	
 	con_exit_choice:.asciiz "\nChon 1 de tiep tuc, 0 de thoat chuong trinh: "
 	
 	str_day:	.space	3
@@ -50,7 +53,6 @@
 main:
 	la	$a0,time
 	jal	input
-	j	menu
 	
 proc_input:
 	addi	$sp, $sp, -12
@@ -155,7 +157,7 @@ menu:
 	beq	$s1, 7, new_Date
 	beq	$s1, 8, exit_Menu
 	
-	la	$a0, re_input_noNewline
+	la	$a0, re_input
 	addi	$v0, $zero, 4
 	syscall
 	
@@ -177,8 +179,39 @@ choice1_proc:
 	j	continue_exit
 	
 choice2_proc:
+	la	$a0, choice2_option
+	addi	$v0, $zero, 4
+	syscall
 	
-
+	add	$v0, $zero, 12
+	syscall
+	addi	$t0, $v0, 0
+	
+	beq	$t0, 'A', choice2_true
+	beq	$t0, 'B', choice2_true
+	beq	$t0, 'C', choice2_true
+	
+	la	$a0, re_input
+	addi	$v0, $zero, 4
+	syscall
+	
+	j	choice2_proc
+	
+	choice2_true:
+		addi	$a0, $s0, 0
+		addi	$a1, $t0, 0
+		jal	Convert
+		addi	$t0, $v0, 0
+		
+		addi	$a0, $zero, '\n'
+		addi	$v0, $zero, 11
+		syscall
+		
+		addi	$a0, $t0, 0
+		addi	$v0, $zero, 4
+		syscall
+		
+		j	continue_exit
 choice3_proc:
 	la	$a0, output_result
 	addi	$v0, $zero, 4
@@ -223,8 +256,55 @@ choice4_proc:
 		j	continue_exit
 
 choice5_proc:
+	addi 	$a0, $zero, 11
+	addi	$v0, $zero, 9
+	syscall
 	
-
+	addi	$s1, $v0, 0
+	
+	addi	$a0, $v0, 0
+	jal	input
+	
+	choice5_proc_input:
+		addi	$sp, $sp, -12
+	
+		# chuyen str ngay -> so
+		la	$a0, str_day
+		jal	strToNum
+		addi	$t0, $v0, 0
+		sw	$t0, 0($sp)
+	
+		# chuyen str thang -> so
+		la	$a0, str_month
+		jal	strToNum
+		addi	$t1, $v0, 0
+		sw	$t1, 4($sp)
+	
+		# chuyen str nam -> so
+		la	$a0, str_year
+		jal	strToNum
+		addi	$t2, $v0, 0
+		sw	$t2, 8($sp)
+	
+		# chuyen ngay, thang, nam sang string
+		lw	$a0, 0($sp) #ngay
+		lw	$a1, 4($sp) #thang
+		lw	$a2, 8($sp) #nam
+		addi	$a3, $s1, 0
+		jal	DATE
+		addi	$s0, $v0, 0
+	
+		addi	$sp, $sp, 12
+	
+	addi	$a0, $s0, 0
+	addi	$a1, $s1, 0
+	jal	GetTime
+	
+	addi	$a0, $v0, 0
+	addi	$v0, $zero, 1
+	syscall
+	
+	j	continue_exit
 choice6_proc:
 	la	$a0, output_result
 	addi	$v0, $zero, 4
@@ -260,6 +340,12 @@ continue_exit:
 	
 	beq	$t0, 1, menu
 	beq	$t0, 0, exit_Menu
+	
+	la	$a0, re_input
+	addi	$v0, $zero, 4
+	syscall
+	
+	j	continue_exit
 	
 new_Date:
 	j	main
@@ -322,6 +408,7 @@ re_Input:
 	jal	print_Str
 	addi	$a0,$t0,0
 	jal	read_DMY
+	
 #Kiem tra hop le 3 string $a0 (day), $a1 (month), $a2 (year). Ket qua tra ve $v0, 1:dung, 0:sai
 check_Valid:
 	subi	$sp,$sp,16
@@ -436,7 +523,7 @@ return_gd:
 	lw	$ra,8($sp)
 	addi	$sp,$sp,12
 	jr	$ra
-#In string vi tri $a0, doc string co $a1 ki tu vao vi tri $a2 (co chuan hoa).
+#In string vi tri $a0, doc string co $a1 ki tu vao vi tri $a2 (co chuan hoa)
 request_Read:
 	subi	$sp,$sp,8
 	sw	$a0,0($sp)
