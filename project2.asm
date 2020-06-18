@@ -1,9 +1,10 @@
 	.data
 	re_input:	.asciiz	"\nMoi ban nhap lai.\n"
+	re_input_noNewline:.asciiz "Moi ban nhap lai.\n"
 	input_day: 	.asciiz	"Nhap ngay DAY:"
 	input_month:	.asciiz "\nNhap thang MONTH:"
 	input_year:	.asciiz "\nNhap nam YEAR:"
-	choice:		.asciiz "----------Ban hay chon 1 trong cac thao tac duoi day----------\n"
+	choice:		.asciiz "\n----------Ban hay chon 1 trong cac thao tac duoi day----------\n"
 	choice1:	.asciiz "1.Xuat string TIME theo dinh dang DD/MM/YYYY\n"
 	choice2:	.asciiz "2.Chuyen doi string TIME thanh mot trong cac dinh dang sau:\n"
 	choice2_A:	.asciiz "\tA.MM/DD/YYYY\n"
@@ -13,10 +14,16 @@
 	choice4:	.asciiz "4.Kiem tra nam trong string TIME co phai la nam nhuan khong?\n"
 	choice5:	.asciiz "5.Cho biet khoang thoi gian giua string TIME_1 va TIME_2.\n"
 	choice6:	.asciiz "6.Cho biet 2 nam nhuan gan nhat voi nam trong string time.\n"
-	choice7:	.asciiz "7.Ket thuc chuong trinh\n"
+	choice7:	.asciiz "7.Nhap lai ngay moi.\n"
+	choice8:	.asciiz "8.Ket thuc chuong trinh.\n"
 	close_choice:	.asciiz "----------------------------------------------------------------\n"
-	input_choice:	.asciiz "Lua chon: "
+	inputChoice_str:.asciiz "Lua chon: "
 	output_result:	.asciiz "Ket qua: "
+	is_leap_year:	.asciiz "Day la nam nhuan.\n"
+	not_leap_year:	.asciiz "Day khong phai la nam nhuan.\n"
+	coma:		.asciiz ", "
+	con_exit_choice:.asciiz "\nChon 1 de tiep tuc, 0 de thoat chuong trinh: "
+	
 	str_day:	.space	3
 	str_month:	.space	3
 	str_nameMonth:	.space 	4
@@ -53,8 +60,39 @@ check_input:
 	bne	$t0, $zero, menu
 	
 input_again:
-	jal	re_Input
-	j	check_input
+	#jal	re_Input
+	#j	check_input
+	
+proc_input:
+	addi	$sp, $sp, -12
+	
+	# chuyen str ngay -> so
+	la	$a0, str_day
+	jal	strToNum
+	addi	$t0, $v0, 0
+	sw	$t0, 0($sp)
+	
+	# chuyen str thang -> so
+	la	$a0, str_month
+	jal	strToNum
+	addi	$t1, $v0, 0
+	sw	$t1, 4($sp)
+	
+	# chuyen str nam -> so
+	la	$a0, str_year
+	jal	strToNum
+	addi	$t2, $v0, 0
+	sw	$t2, 8($sp)
+	
+	# chuyen ngay, thang, nam sang string
+	lw	$a0, 0($sp) #ngay
+	lw	$a1, 4($sp) #thang
+	lw	$a2, 8($sp) #nam
+	la	$a3, time
+	jal	DATE
+	addi	$s0, $v0, 0
+	
+	addi	$sp, $sp, 12
 
 menu:
 	print:
@@ -102,53 +140,146 @@ menu:
 		addi	$v0, $zero, 4
 		syscall
 		
-		la	$a0, close_choice
+		la	$a0, choice8
 		addi	$v0, $zero, 4
 		syscall
 		
-		la	$a0, input_choice
+		la	$a0, close_choice
+		addi	$v0, $zero, 4
+		syscall
+	
+	input_choice:
+		la	$a0, inputChoice_str
 		addi	$v0, $zero, 4
 		syscall
 	
 		add	$v0, $zero, 5
 		syscall
-		add	$s0, $v0, 0
+		add	$s1, $v0, 0
 		
-	beq	$s0, 1, choice1_proc
-	beq	$s0, 2, choice2_proc
-	beq	$s0, 3, choice3_proc
-	beq	$s0, 4, choice4_proc
-	beq	$s0, 5, choice5_proc
-	beq	$s0, 6, choice6_proc
-	beq	$s0, 7, exit_Menu
+	beq	$s1, 1, choice1_proc
+	beq	$s1, 2, choice2_proc
+	beq	$s1, 3, choice3_proc
+	beq	$s1, 4, choice4_proc
+	beq	$s1, 5, choice5_proc
+	beq	$s1, 6, choice6_proc
+	beq	$s1, 7, new_Date
+	beq	$s1, 8, exit_Menu
 	
-	la	$a0, re_input
+	la	$a0, re_input_noNewline
 	addi	$v0, $zero, 4
 	syscall
+	
+	j	input_choice
 	
 choice1_proc:
 	la	$a0, output_result
 	addi	$v0, $zero, 4
 	syscall
 	
+	# in D?/MM/YYYY
+	addi	$sp, $sp, -4
+	sw	$s0, 0($sp)
+	addi	$a0, $s0, 0
+	jal	print_Str
+	
+	lw	$s0, 0($sp)
+	addi	$sp, $sp, 4
+	j	continue_exit
 	
 choice2_proc:
+	
 
 choice3_proc:
-
+	la	$a0, output_result
+	addi	$v0, $zero, 4
+	syscall
+	
+	addi	$sp, $sp, -4
+	sw	$s0, 0($sp)
+	addi	$a0, $s0, 0
+	jal	Weekday
+	
+	lw	$s0, 0($sp)
+	addi	$sp, $sp, 4
+	j	continue_exit
+	
 choice4_proc:
+	la	$a0, output_result
+	addi	$v0, $zero, 4
+	syscall
+	
+	addi	$sp, $sp, -4
+	sw	$s0, 0($sp)
+	addi	$a0, $s0, 0
+	jal	LeapYear
+	
+	addi	$t0, $v0, 0
+	beq	$t0, 0, choice4_res_false
+	
+	la	$a0, is_leap_year
+	addi	$v0, $zero, 4
+	syscall
+	
+	j	choice4_end
+	
+	choice4_res_false:
+		la	$a0, not_leap_year
+		addi	$v0, $zero, 4
+		syscall
+	
+	choice4_end:
+		lw	$s0, 0($sp)
+		addi	$sp, $sp, 4
+		j	continue_exit
 
 choice5_proc:
+	
 
 choice6_proc:
+	la	$a0, output_result
+	addi	$v0, $zero, 4
+	syscall
+	
+	addi	$sp, $sp, -4
+	sw	$s0, 0($sp)
+	addi	$a0, $s0, 0
+	jal	NextLeapYear
+	
+	addi	$a0, $v0, 0
+	jal	print_Int
+	
+	la	$a0, coma
+	addi	$v0, $zero, 4
+	syscall
+	
+	addi	$a0, $v1, 0
+	jal	print_Int
+	
+	lw	$s0, 0($sp)
+	addi	$sp, $sp, 4
+	j	continue_exit
+
+continue_exit:
+	la	$a0, con_exit_choice
+	addi	$v0, $zero, 4
+	syscall
+
+	add	$v0, $zero, 5
+	syscall
+	add	$t0, $v0, 0
+	
+	beq	$t0, 1, menu
+	beq	$t0, 0, exit_Menu
+	
+new_Date:
+	j	main
 
 exit_Menu:
-
+	
 	addi	$v0, $zero, 10
 	syscall
 	
-
-
 
 #-------------------------------------------------TA--------------------------------------------------#
 #Nhap ngay thang nam
