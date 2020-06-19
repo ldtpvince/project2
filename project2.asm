@@ -44,8 +44,6 @@
 	address_day:	.word	sun,mon,tue,wed,thu,fri,sat,sun
 	t0:		.space	15
 	t1:		.space	15
-	test0:		.asciiz	"29/02/2020"
-	test1:		.asciiz	"28/02/2021"
 	.text
 	
 #-------------------------------------------------TP--------------------------------------------------#
