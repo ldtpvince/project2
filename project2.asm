@@ -35,9 +35,9 @@
 	time:		.space	11
 	time_mon: 	.space 	13
 	mon:		.asciiz	"Mon"
-	tue:		.asciiz	"Tue"
+	tue:		.asciiz	"Tues"
 	wed:		.asciiz	"Wed"
-	thu:		.asciiz	"Thu"
+	thu:		.asciiz	"Thurs"
 	fri:		.asciiz	"Fri"
 	sat:		.asciiz	"Sat"
 	sun:		.asciiz	"Sun"
@@ -843,9 +843,8 @@ return_wd:
 	div	$t3,$t3,7
 	mfhi	$t3
 	#Truy xuat mang thu
-	addi	$t3, $t3, 1
 	sll	$t3,$t3,2
-	lw	$t4, address_day
+	la	$t4, address_day
 	add	$t5,$t3,$t4
 	lw	$v0,0($t5)
 	#Thu hoi stack
