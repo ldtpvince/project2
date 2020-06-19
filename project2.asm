@@ -35,9 +35,9 @@
 	time:		.space	11
 	time_mon: 	.space 	13
 	mon:		.asciiz	"Mon"
-	tue:		.asciiz	"Tues"
+	tue:		.asciiz	"Tue"
 	wed:		.asciiz	"Wed"
-	thu:		.asciiz	"Thurs"
+	thu:		.asciiz	"Thu"
 	fri:		.asciiz	"Fri"
 	sat:		.asciiz	"Sat"
 	sun:		.asciiz	"Sun"
@@ -222,6 +222,10 @@ choice3_proc:
 	addi	$a0, $s0, 0
 	jal	Weekday
 	
+	addi	$a0, $v0, 0
+	addi	$v0, $zero, 4
+	syscall
+	
 	lw	$s0, 0($sp)
 	addi	$sp, $sp, 4
 	j	continue_exit
@@ -292,7 +296,7 @@ choice5_proc:
 		lw	$a2, 8($sp) #nam
 		addi	$a3, $s1, 0
 		jal	DATE
-		addi	$s0, $v0, 0
+		addi	$s1, $v0, 0
 	
 		addi	$sp, $sp, 12
 	
