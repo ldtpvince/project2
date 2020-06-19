@@ -44,8 +44,6 @@
 	address_day:	.word	sun,mon,tue,wed,thu,fri,sat,sun
 	t0:		.space	15
 	t1:		.space	15
-	test0:		.asciiz	"29/02/2020"
-	test1:		.asciiz	"28/02/2021"
 	.text
 	
 #-------------------------------------------------TP--------------------------------------------------#
@@ -845,6 +843,7 @@ return_wd:
 	div	$t3,$t3,7
 	mfhi	$t3
 	#Truy xuat mang thu
+	addi	$t3, $t3, 1
 	sll	$t3,$t3,2
 	lw	$t4, address_day
 	add	$t5,$t3,$t4
