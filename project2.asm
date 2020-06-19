@@ -859,7 +859,7 @@ Convert:
 	sw	$ra, 0($sp)
 	sw	$a0, 16($sp)
 	sw	$a1, 20($sp)
-	#Lay ngay, thang, nam vao $t0, $t1, $t2
+	#Lay ngay, thang, nam lưu vào stack
 	jal	Day
 	sw	$v0,4($sp)
 	jal	Month
