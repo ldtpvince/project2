@@ -409,7 +409,7 @@ re_Input:
 	la	$a0,re_input
 	jal	print_Str
 	addi	$a0,$t0,0
-	jal	read_DMY
+	j	read_DMY
 	
 #Kiem tra hop le 3 string $a0 (day), $a1 (month), $a2 (year). Ket qua tra ve $v0, 1:dung, 0:sai
 check_Valid:
