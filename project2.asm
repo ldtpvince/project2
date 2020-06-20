@@ -189,6 +189,10 @@ choice2_proc:
 	beq	$t0, 'B', choice2_true
 	beq	$t0, 'C', choice2_true
 	
+	addi	$a0, $zero, '\n'
+	addi	$v0, $zero, 11
+	syscall
+	
 	la	$a0, re_input
 	addi	$v0, $zero, 4
 	syscall
@@ -1436,10 +1440,17 @@ NextLeapYearLoop:
 	lw	$t3, 20($sp)
 	
 	beq	$v0, $zero, NLYLine
+	
 	addi	$t1, $t1, 1
-	sw	$t0, 24($sp)
+	sll	$t4, $t1, 2
+	addi	$t4, $t4, 20
+	add	$t4, $t4, $sp
+	sw	$t0, 0($t4)
 	
 NLYLine:
+	slti	$t3, $t1, 2
+	beq	$t3, $zero, NLYLoopOut
+
 	sw	$t0, 8($sp)
 	sw	$t1, 12($sp)
 	sw	$t2, 16($sp)
@@ -1455,7 +1466,10 @@ NLYLine:
 	
 	beq	$v0, $zero, NextLeapYearLoop
 	addi	$t1, $t1, 1
-	sw	$t2, 28($sp)
+	sll	$t4, $t1, 2
+	addi	$t4, $t4, 20
+	add	$t4, $t4, $sp
+	sw	$t2, 0($t4)
 	j 	NextLeapYearLoop
 NLYLoopOut:
 	lw	$ra, 0($sp)
