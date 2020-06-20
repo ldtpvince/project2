@@ -854,7 +854,7 @@ return_wd:
 	#Thu hoi stack
 	lw	$a0,0($sp)
 	lw	$ra,4($sp)
-	subi	$sp,$sp,8
+	addi	$sp,$sp,8
 	jr	$ra
 #-------------------------------------------------DD--------------------------------------------------#
 # Ham chuyen doi chuoi time $a0 voi kieu chuyen TYPE $a1, tra ve $v0 la chuoi time_mon
